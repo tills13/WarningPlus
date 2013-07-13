@@ -1,6 +1,9 @@
 package me.kreashenz.warningplus;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -9,7 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WarningPlus extends JavaPlugin {
-
 	protected List<String> reasons;
 
 	public void onEnable(){
@@ -18,116 +20,93 @@ public class WarningPlus extends JavaPlugin {
 
 	@Override
 	public boolean onCommand(CommandSender s, Command cmd, String label, String[] args){
-		if(cmd.getName().equalsIgnoreCase("warnhelp")){
-			if(s instanceof Player){
-				Player p = (Player)s;
-				if(p.hasPermission("warningplus.help")){
-					if(args.length >= 0){
-						p.sendMessage("§9==========[ §6WarningPlus ]==========");
-						p.sendMessage("§b/warnhelp §8: §3Shows this.");
-						p.sendMessage("§b/warn <player> <reason> §8: §3Warn a player.");
-						p.sendMessage("§b/warncheck <player> §8: §3Check a player's warnings.");
-						p.sendMessage("§9==========[ §6WarningPlus ]==========");
-					}
-				} else p.sendMessage("§cYou don't have permission to do this.");
-			} else {
-				if(args.length >= 0){
-					s.sendMessage("§9==========[ §6WarningPlus ]==========");
-					s.sendMessage("§b/warnhelp §8: §3Shows this.");
-					s.sendMessage("§b/warn <player> <reason> §8: §3Warn a player.");
-					s.sendMessage("§b/warncheck <player> §8: §3Check a player's warnings.");
-					s.sendMessage("§9==========[ §6WarningPlus ]==========");
-				}
-			}
-		}
-		else if(cmd.getName().equalsIgnoreCase("warn")){
-			if(s instanceof Player){
-				Player p = (Player)s;
-				if(p.hasPermission("warningplus.warn")){
-					if(args.length <= 1)p.sendMessage("§cInvalid arguments. §f/warn <player> <reason>");
-					else {
-						Player t = Bukkit.getPlayer(args[0]);
-						if(t.isOnline() && t != null){
-							String message = "";
-							for (int i = 1; i < args.length; i++)
-								message = message + args[i] + ' ';
-							setWarnings(t, getWarnings(t)+1);
-							addReason(t, message);
-							addWarner(t.getName(), p.getName());
-							saveConfig();
-							t.sendMessage("§cYou have been warned by "+p.getName()+" for " + message);
-						} else p.sendMessage("§cThat player can't be found.");
-					}
-				} else p.sendMessage("§cYou don't have permission to do this.");
-			} else {
-				if(args.length <= 1)s.sendMessage("§cInvalid arguments. §f/warn <player> <reason>");
+		if (cmd.getName().equalsIgnoreCase("warnhelp")) {
+			s.sendMessage("==========[ WarningPlus ]==========");
+			s.sendMessage("/warnhelp : shows this");
+			s.sendMessage("/warn <player> <reason> : warn a player");
+			s.sendMessage("/warncheck <player> : check a player's warnings");
+			s.sendMessage("=====================================");
+		} else if (cmd.getName().equalsIgnoreCase("warn")) {
+			if (s.hasPermission("warningplus.warn")) {
+				if (args.length <= 1) s.sendMessage("Command syntax: /warn <player> <reason>");
 				else {
-					Player t = Bukkit.getPlayer(args[0]);
-					if(t.isOnline() && t != null){
+					Player player = Bukkit.getPlayer(args[0]);
+
+					if (player == null) {
+						s.sendMessage("Player must be online");
+						return true;
+					} else {
 						String message = "";
-						for (int i = 1; i < args.length; i++)
-							message = message + args[i] + ' ';
-						setWarnings(t, getWarnings(t)+1);
-						addReason(t, message);
-						addWarner(t.getName(), s.getName());
+
+						for (int i = 1; i < args.length; i++) {
+							message += (args[i] + " ");
+						}
+
+						setWarnings(player.getName(), getNumWarnings(player.getName()) + 1);
+						addReason(player.getName(), message);
+						addWarner(player.getName(), s.getName());
 						saveConfig();
-						t.sendMessage("§cYou have been warned by "+s.getName()+" for " + message);
-					} else s.sendMessage("§cThat player can't be found.");
-				}
-			}
-		}
-		else if(cmd.getName().equalsIgnoreCase("warncheck")){
-			if(s instanceof Player){
-				Player p = (Player)s;
-				if(p.hasPermission("warningplus.warncheck")){
-					if(args.length == 0)p.sendMessage("§cInvalid arguments. §c/warncheck <player>");
-					else {
-						Player t = Bukkit.getPlayer(args[0]);
-						if(t.isOnline() && t != null){
-							String a = "";
-							for(String i : getConfig().getStringList(t.getName() + ".warners")){
-								i = "§a"+i+"§e, ";
-								a = a + i + ", ";
-							}
-							p.sendMessage("§cFrom §9"+a);
-							p.sendMessage("§9"+t.getName()+" §chas §9"+getWarnings(t)+" §cwarnings.");
-						} else p.sendMessage("§cThat player can't be found.");
+						player.sendMessage("You have been warned by " + s.getName() + " for " + message);
 					}
-				} else p.sendMessage("§cYou don't have permission to use this command.");
-			} else {
-				if(args.length == 0)s.sendMessage("§cInvalid arguments. §c/warncheck <player>");
-				else {
-					Player t = Bukkit.getPlayer(args[0]);
-					if(t.isOnline() && t != null){
-						for(String i : getConfig().getStringList(t.getName() + ".warners"))
-							s.sendMessage("§cFrom §9"+i.substring(i.length()-1));
-						s.sendMessage("§9"+t.getName()+" §chas §9"+getWarnings(t)+" §cwarnings.");
-					} else s.sendMessage("§cThat player can't be found.");
 				}
+			} else {
+				s.sendMessage("You don't have permission to do this.");
+			}
+		} else if (cmd.getName().equalsIgnoreCase("warncheck")) {
+			if (s.hasPermission("warningplus.warncheck")) {
+				if (args.length == 0) s.sendMessage("Invalid arguments. /warncheck <player>");
+				else {
+					List<String> warners = getConfig().getStringList(args[0] + ".warners");
+					if (warners == null) {
+						s.sendMessage("No warnings for that player.");
+						return true;
+					} else {
+						Map<String, Integer> map = new HashMap<String, Integer>();
+						for (String warner : warners) {
+							if (map.containsKey(warner)) {
+								map.put(warner, map.get(warner) + 1);
+							} else {
+								map.put(warner, 1);
+							}
+						}
+
+						for (String warner : map.keySet()) s.sendMessage(args[0] + " has " + map.get(warner) + (map.get(warner) == 1 ? " warning" : " warnings") + " from " + warner);
+					}
+				}
+			} else {
+				s.sendMessage("You don't have permission to do this.");
 			}
 		}
 		return true;
 	}
 
-	private void setWarnings(Player p, int warnings){
-		getConfig().set(p.getName() + ".warnings", warnings);
+	private void setWarnings(String target, int warnings) {
+		getConfig().set(target + ".warnings", warnings);
 		saveConfig();
 	}
 
-	private int getWarnings(Player p){
-		if(getConfig().get(p.getName() + ".warnings") != null){
-			return getConfig().getInt(p.getName() + ".warnings");
+	private int getNumWarnings(String player) {
+		if (getConfig().get(player + ".warnings") != null) {
+			return getConfig().getInt(player + ".warnings");
 		} else {
 			return 0;
 		}
 	}
 
-	private void addReason(Player p, String reason){
-		getConfig().set(p.getName() + ".reasons", reason);
+	private void addReason(String target, String reason) {
+		if (getConfig().getStringList(target + ".reasons") == null) getConfig().set(target, new ArrayList<String>());
+		List<String> list = getConfig().getStringList(target + ".reasons");
+		list.add(reason);
+		getConfig().set(target + ".reasons", list);
+		saveConfig();
 	}
 
-	private void addWarner(String target, String warner){
-		getConfig().getStringList(target + ".warners").add(warner);
+	private void addWarner(String target, String warner) {
+		if (getConfig().getStringList(target + ".warners") == null) getConfig().set(target, new ArrayList<String>());
+		List<String> list = getConfig().getStringList(target + ".warners");
+		list.add(warner);
+		getConfig().set(target + ".warners", list);
+		saveConfig();
 	}
 
 }
