@@ -1,6 +1,6 @@
 name: WarningPlus
 main: me.kreashenz.warningplus.WarningPlus
-version: 1.0
+version: 2.0
 description: WarningPlus, the best warning system.
 
 commands:
