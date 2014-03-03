@@ -1,0 +1,16 @@
+name: WarningPlus
+main: me.kreashenz.warningplus.WarningPlus
+version: 1.0
+description: WarningPlus, the best warning system.
+
+commands:
+  warn:
+    description: Warn a player.
+  warnhelp:
+    description: Show the help for WarningPlus
+  warncheck:
+    description: Check how many warnings a player has.
+  warnlist:
+    description: Get a list of warnings.
+  warnreset:
+    description: Reset players warnings.
